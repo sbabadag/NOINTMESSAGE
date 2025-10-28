@@ -30,10 +30,20 @@ const DeviceSelectionScreen: React.FC<Props> = ({navigation}) => {
 
   const initializeBLE = async () => {
     try {
+      console.log('🔄 Initializing BLE...');
       await bleService.initialize();
+      console.log('✅ BLE initialized, starting scan...');
       startScan();
     } catch (error) {
-      Alert.alert('Error', 'Failed to initialize Bluetooth. Please check if Bluetooth is enabled.');
+      console.error('❌ BLE initialization failed:', error);
+      Alert.alert(
+        'Bluetooth Error', 
+        'Failed to initialize Bluetooth. Please:\n\n• Enable Bluetooth in settings\n• Grant location permissions\n• Restart the app',
+        [
+          {text: 'Retry', onPress: initializeBLE},
+          {text: 'Cancel', style: 'cancel'}
+        ]
+      );
     }
   };
 
@@ -42,21 +52,32 @@ const DeviceSelectionScreen: React.FC<Props> = ({navigation}) => {
     setDevices([]);
     
     try {
+      console.log('🔍 Starting device scan...');
       const foundDevices = await bleService.scanForDevices();
       setDevices(foundDevices);
       
       if (foundDevices.length === 0) {
         Alert.alert(
-          'No Devices Found',
-          'No LoRa devices found. Make sure your devices are powered on and nearby.',
+          'No LoRa Stations Found',
+          'No M1 or M2 stations detected.\n\nMake sure:\n• ESP32 devices are powered on\n• LoRa firmware is running\n• Devices are within 10m range\n• Bluetooth permissions are granted',
           [
             {text: 'Scan Again', onPress: startScan},
             {text: 'Cancel', style: 'cancel'},
           ]
         );
+      } else {
+        console.log(`✅ Found ${foundDevices.length} devices`);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to scan for devices. Please try again.');
+      console.error('❌ Scan failed:', error);
+      Alert.alert(
+        'Scan Failed', 
+        'Could not scan for devices. Please check Bluetooth permissions and try again.',
+        [
+          {text: 'Retry', onPress: startScan},
+          {text: 'Cancel', style: 'cancel'}
+        ]
+      );
     } finally {
       setScanning(false);
     }
@@ -64,19 +85,38 @@ const DeviceSelectionScreen: React.FC<Props> = ({navigation}) => {
 
   const connectToDevice = async (device: LoRaDevice) => {
     try {
+      console.log(`🔗 Connecting to ${device.name}...`);
+      
       const connected = await bleService.connectToDevice(device.id);
       
       if (connected) {
+        console.log(`✅ Connected to ${device.name}`);
         navigation.navigate('Chat', {
           deviceId: device.id,
           deviceName: device.name,
           bleService: bleService,
         });
       } else {
-        Alert.alert('Connection Failed', 'Could not connect to the device. Please try again.');
+        console.log(`❌ Failed to connect to ${device.name}`);
+        Alert.alert(
+          'Connection Failed', 
+          `Could not connect to ${device.name}.\n\nTry:\n• Moving closer to the device\n• Restarting the ESP32\n• Scanning again`,
+          [
+            {text: 'Retry', onPress: () => connectToDevice(device)},
+            {text: 'Cancel', style: 'cancel'}
+          ]
+        );
       }
     } catch (error) {
-      Alert.alert('Error', 'An error occurred while connecting to the device.');
+      console.error(`❌ Connection error for ${device.name}:`, error);
+      Alert.alert(
+        'Connection Error', 
+        `Error connecting to ${device.name}. Please try again.`,
+        [
+          {text: 'Retry', onPress: () => connectToDevice(device)},
+          {text: 'Cancel', style: 'cancel'}
+        ]
+      );
     }
   };
 

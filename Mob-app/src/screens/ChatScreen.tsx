@@ -32,34 +32,56 @@ const ChatScreen: React.FC<Props> = ({navigation, route}) => {
   const remotStationType = stationType === 'M1' ? 'M2' : 'M1';
 
   useEffect(() => {
-    // Set up message listener
-    bleService.setMessageCallback((message: ChatMessage) => {
-      setMessages((prevMessages) => [...prevMessages, message]);
-      // Auto scroll to bottom
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({animated: true});
-      }, 100);
-    });
+    try {
+      // Set up message listener with error handling
+      if (bleService && bleService.setMessageCallback) {
+        bleService.setMessageCallback((message: ChatMessage) => {
+          try {
+            setMessages((prevMessages) => [...prevMessages, message]);
+            // Auto scroll to bottom
+            setTimeout(() => {
+              flatListRef.current?.scrollToEnd({animated: true});
+            }, 100);
+          } catch (error) {
+            console.error('❌ Error handling message:', error);
+          }
+        });
+      }
 
-    // Set up status listener
-    bleService.setStatusCallback((status: string) => {
-      setConnectionStatus(status);
-      console.log('📊 Connection status update:', status);
-    });
+      // Set up status listener with error handling
+      if (bleService && bleService.setStatusCallback) {
+        bleService.setStatusCallback((status: string) => {
+          try {
+            setConnectionStatus(status);
+            console.log('📊 Connection status update:', status);
+          } catch (error) {
+            console.error('❌ Error handling status:', error);
+          }
+        });
+      }
 
-    // Add welcome message
-    const welcomeMessage: ChatMessage = {
-      id: 'welcome',
-      text: `📡 Connected to ${deviceName} Station!\n\n💬 Messages you send will be transmitted via LoRa to ${remotStationType} Station.\n\n📨 Messages from ${remotStationType} Station will appear here.`,
-      timestamp: new Date(),
-      fromDevice: 'System',
-      deviceId: 0,
-      isOutgoing: false,
-    };
-    setMessages([welcomeMessage]);
+      // Add welcome message
+      const welcomeMessage: ChatMessage = {
+        id: 'welcome',
+        text: `📡 Connected to ${deviceName} Station!\n\n💬 Messages you send will be transmitted via LoRa to ${remotStationType} Station.\n\n📨 Messages from ${remotStationType} Station will appear here.`,
+        timestamp: new Date(),
+        fromDevice: 'System',
+        deviceId: 0,
+        isOutgoing: false,
+      };
+      setMessages([welcomeMessage]);
+    } catch (error) {
+      console.error('❌ Error in ChatScreen useEffect:', error);
+    }
 
     return () => {
-      bleService.disconnect();
+      try {
+        if (bleService && bleService.disconnect) {
+          bleService.disconnect();
+        }
+      } catch (error) {
+        console.error('❌ Error disconnecting:', error);
+      }
     };
   }, []);
 
@@ -70,12 +92,21 @@ const ChatScreen: React.FC<Props> = ({navigation, route}) => {
     setInputText('');
 
     try {
+      if (!bleService) {
+        Alert.alert('Error', 'BLE service not available');
+        return;
+      }
+
       const success = await bleService.sendMessage(messageText);
       if (!success) {
-        Alert.alert('Error', 'Failed to send message. Please check your connection.');
+        Alert.alert('Send Failed', 'Could not send message. Check LoRa connection.');
       }
     } catch (error) {
-      Alert.alert('Error', 'An error occurred while sending the message.');
+      console.error('❌ Send message error:', error);
+      Alert.alert('Send Error', 'An error occurred while sending the message.');
+      
+      // Add the message back to input if it failed
+      setInputText(messageText);
     }
   };
 
