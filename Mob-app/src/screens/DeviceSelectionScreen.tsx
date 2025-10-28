@@ -86,15 +86,23 @@ const DeviceSelectionScreen: React.FC<Props> = ({navigation}) => {
       onPress={() => connectToDevice(item)}
     >
       <View style={styles.deviceInfo}>
-        <Text style={styles.deviceName}>{item.name}</Text>
-        <Text style={styles.deviceId}>ID: {item.id.substring(0, 8)}...</Text>
+        <View style={styles.stationHeader}>
+          <Text style={styles.deviceName}>{item.name} Station</Text>
+          <Text style={styles.stationBadge}>{item.stationType}</Text>
+        </View>
+        <Text style={styles.deviceDescription}>
+          {item.stationType === 'M1' ? 
+            '📡 Primary LoRa Station - Connects to M2' : 
+            '📡 Secondary LoRa Station - Connects to M1'}
+        </Text>
+        <Text style={styles.deviceId}>Device ID: {item.id.substring(0, 12)}...</Text>
         {item.rssi && (
-          <Text style={styles.deviceRssi}>Signal: {item.rssi} dBm</Text>
+          <Text style={styles.deviceRssi}>📶 Signal Strength: {item.rssi} dBm</Text>
         )}
       </View>
       <View style={styles.deviceStatus}>
-        <Text style={styles.connectText}>Tap to Connect</Text>
-        <Text style={styles.arrow}>→</Text>
+        <Text style={styles.connectText}>Connect</Text>
+        <Text style={styles.arrow}>📱</Text>
       </View>
     </TouchableOpacity>
   );
@@ -102,9 +110,11 @@ const DeviceSelectionScreen: React.FC<Props> = ({navigation}) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Select LoRa Device</Text>
+        <Text style={styles.title}>LoRa Message Tunnel</Text>
         <Text style={styles.subtitle}>
-          {scanning ? 'Scanning for devices...' : `Found ${devices.length} device(s)`}
+          {scanning ? '🔍 Scanning for M1/M2 stations...' : 
+           devices.length > 0 ? `📡 Found ${devices.length} LoRa station(s)` : 
+           '❌ No LoRa stations found'}
         </Text>
       </View>
 
@@ -112,7 +122,10 @@ const DeviceSelectionScreen: React.FC<Props> = ({navigation}) => {
         {scanning ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#4285F4" />
-            <Text style={styles.loadingText}>Scanning for LoRa devices...</Text>
+            <Text style={styles.loadingText}>🔍 Scanning for M1/M2 LoRa stations...</Text>
+            <Text style={styles.scanHint}>
+              Make sure your ESP32 devices are powered on and advertising BLE
+            </Text>
           </View>
         ) : (
           <>
@@ -124,8 +137,24 @@ const DeviceSelectionScreen: React.FC<Props> = ({navigation}) => {
               showsVerticalScrollIndicator={false}
             />
             
+            {devices.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>
+                  📡 No M1 or M2 stations found
+                </Text>
+                <Text style={styles.emptyHint}>
+                  Make sure your ESP32 devices are:
+                  {'\n'}• Powered on and running LoRa firmware
+                  {'\n'}• Broadcasting BLE with correct service UUID
+                  {'\n'}• Within Bluetooth range (≈10m)
+                </Text>
+              </View>
+            ) : null}
+            
             <TouchableOpacity style={styles.scanButton} onPress={startScan}>
-              <Text style={styles.scanButtonText}>Scan Again</Text>
+              <Text style={styles.scanButtonText}>
+                {devices.length === 0 ? 'Scan for Stations' : 'Scan Again'}
+              </Text>
             </TouchableOpacity>
           </>
         )}
@@ -233,6 +262,53 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  stationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  stationBadge: {
+    backgroundColor: '#4285F4',
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: 'bold',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    textAlign: 'center',
+  },
+  deviceDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+    fontStyle: 'italic',
+  },
+  scanHint: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    padding: 20,
+    marginVertical: 20,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#666',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  emptyHint: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'left',
+    lineHeight: 20,
   },
 });
 

@@ -23,9 +23,13 @@ const ChatScreen: React.FC<Props> = ({navigation, route}) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isConnected, setIsConnected] = useState(true);
+  const [connectionStatus, setConnectionStatus] = useState('Connected');
   const flatListRef = useRef<FlatList>(null);
   
-  const {deviceName, bleService}: {deviceName: string; bleService: BLEService} = route.params;
+  const deviceName = route.params?.deviceName || 'Unknown Device';
+  const bleService = route.params?.bleService as BLEService;
+  const stationType = bleService?.getConnectedStationType();
+  const remotStationType = stationType === 'M1' ? 'M2' : 'M1';
 
   useEffect(() => {
     // Set up message listener
@@ -37,10 +41,16 @@ const ChatScreen: React.FC<Props> = ({navigation, route}) => {
       }, 100);
     });
 
+    // Set up status listener
+    bleService.setStatusCallback((status: string) => {
+      setConnectionStatus(status);
+      console.log('📊 Connection status update:', status);
+    });
+
     // Add welcome message
     const welcomeMessage: ChatMessage = {
       id: 'welcome',
-      text: `Connected to ${deviceName}. You can now send messages via LoRa!`,
+      text: `📡 Connected to ${deviceName} Station!\n\n💬 Messages you send will be transmitted via LoRa to ${remotStationType} Station.\n\n📨 Messages from ${remotStationType} Station will appear here.`,
       timestamp: new Date(),
       fromDevice: 'System',
       deviceId: 0,
@@ -80,11 +90,22 @@ const ChatScreen: React.FC<Props> = ({navigation, route}) => {
     ]}>
       <View style={[
         styles.messageBubble,
-        item.isOutgoing ? styles.outgoingBubble : styles.incomingBubble
+        item.isOutgoing ? styles.outgoingBubble : styles.incomingBubble,
+        item.fromDevice === 'System' && styles.systemBubble
       ]}>
+        {/* Station indicator for non-system messages */}
+        {item.stationType && item.fromDevice !== 'System' && (
+          <View style={styles.stationHeader}>
+            <Text style={styles.stationText}>
+              {item.isOutgoing ? `${stationType} → ${remotStationType}` : `${item.stationType} Station`}
+            </Text>
+          </View>
+        )}
+        
         <Text style={[
           styles.messageText,
-          item.isOutgoing ? styles.outgoingText : styles.incomingText
+          item.isOutgoing ? styles.outgoingText : styles.incomingText,
+          item.fromDevice === 'System' && styles.systemText
         ]}>
           {item.text}
         </Text>
@@ -92,16 +113,17 @@ const ChatScreen: React.FC<Props> = ({navigation, route}) => {
         <View style={styles.messageInfo}>
           <Text style={[
             styles.messageTime,
-            item.isOutgoing ? styles.outgoingTime : styles.incomingTime
+            item.isOutgoing ? styles.outgoingTime : styles.incomingTime,
+            item.fromDevice === 'System' && styles.systemTime
           ]}>
             {formatTime(item.timestamp)}
           </Text>
           
-          {!item.isOutgoing && item.fromDevice !== 'System' && (
+          {!item.isOutgoing && item.fromDevice !== 'System' && item.fromDevice !== 'You' && (
             <Text style={styles.deviceInfo}>
-              From: {item.fromDevice}
-              {item.rssi && ` • ${item.rssi}dBm`}
-              {item.snr && ` • SNR ${item.snr}dB`}
+              📡 Via LoRa from {item.fromDevice}
+              {item.rssi && ` • Signal: ${item.rssi}dBm`}
+              {item.snr && ` • SNR: ${item.snr}dB`}
             </Text>
           )}
         </View>
@@ -115,7 +137,12 @@ const ChatScreen: React.FC<Props> = ({navigation, route}) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.header}>
-        <Text style={styles.deviceName}>{deviceName}</Text>
+        <View style={styles.deviceInfo}>
+          <Text style={styles.deviceName}>{deviceName} Station</Text>
+          <Text style={styles.tunnelInfo}>
+            📡 LoRa Tunnel: {stationType} ↔ {remotStationType}
+          </Text>
+        </View>
         <Text style={styles.connectionStatus}>
           {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
         </Text>
@@ -265,6 +292,35 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  systemBubble: {
+    backgroundColor: '#f0f0f0',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  systemText: {
+    color: '#666',
+    fontStyle: 'italic',
+  },
+  systemTime: {
+    color: '#999',
+  },
+  stationHeader: {
+    marginBottom: 4,
+    paddingBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.2)',
+  },
+  stationText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#e3f2fd',
+    textTransform: 'uppercase',
+  },
+  tunnelInfo: {
+    fontSize: 12,
+    color: '#e3f2fd',
+    marginTop: 2,
   },
 });
 
