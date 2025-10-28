@@ -12,31 +12,49 @@ export class BLEService {
   }
 
   async initialize(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
+      console.log('🔄 Initializing BLE service...');
+      
       const timeout = setTimeout(() => {
-        console.log('⏰ BLE initialization timeout');
-        resolve(); // Don't reject, just resolve to prevent crashes
-      }, 10000);
+        console.log('⏰ BLE initialization timeout - continuing anyway');
+        resolve(); // Always resolve to prevent app crashes
+      }, 15000); // Increased timeout
 
       try {
+        // Wrap in additional try-catch for extra safety
         const subscription = this.manager.onStateChange((state) => {
-          console.log('📡 BLE State:', state);
-          
-          if (state === 'PoweredOn') {
+          try {
+            console.log('📡 BLE State changed to:', state);
+            
+            if (state === 'PoweredOn') {
+              clearTimeout(timeout);
+              subscription?.remove();
+              console.log('✅ BLE is ready');
+              resolve();
+            } else if (state === 'PoweredOff') {
+              console.log('📴 Bluetooth is turned off');
+              clearTimeout(timeout);
+              subscription?.remove();
+              resolve(); // Still resolve to prevent crashes
+            } else if (state === 'Unauthorized') {
+              console.log('🚫 Bluetooth permission denied');
+              clearTimeout(timeout);
+              subscription?.remove();
+              resolve(); // Still resolve to prevent crashes
+            } else {
+              console.log(`⏳ BLE State: ${state} (waiting...)`);
+            }
+          } catch (stateError) {
+            console.error('❌ Error in BLE state handler:', stateError);
             clearTimeout(timeout);
-            subscription.remove();
-            resolve();
-          } else if (state === 'PoweredOff' || state === 'Unauthorized') {
-            clearTimeout(timeout);
-            subscription.remove();
-            console.log('❌ BLE not available:', state);
-            resolve(); // Don't reject to prevent crashes
+            subscription?.remove();
+            resolve(); // Always resolve to prevent crashes
           }
         }, true);
       } catch (error) {
+        console.error('❌ Critical BLE initialization error:', error);
         clearTimeout(timeout);
-        console.error('❌ BLE initialization error:', error);
-        resolve(); // Don't reject to prevent crashes
+        resolve(); // Always resolve, never reject
       }
     });
   }

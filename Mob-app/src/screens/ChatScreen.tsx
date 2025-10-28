@@ -32,20 +32,55 @@ const ChatScreen: React.FC<Props> = ({navigation, route}) => {
   const remotStationType = stationType === 'M1' ? 'M2' : 'M1';
 
   useEffect(() => {
+    console.log('🔄 ChatScreen mounting...');
+    
     try {
-      // Set up message listener with error handling
-      if (bleService && bleService.setMessageCallback) {
+      // Validate BLE service
+      if (!bleService) {
+        console.error('❌ No BLE service provided to ChatScreen');
+        Alert.alert(
+          'Connection Error',
+          'No BLE service available. Please go back and reconnect.',
+          [{text: 'OK', onPress: () => navigation.goBack()}]
+        );
+        return;
+      }
+
+      // Set up message listener with comprehensive error handling
+      if (bleService.setMessageCallback) {
+        console.log('📡 Setting up message callback...');
+        
         bleService.setMessageCallback((message: ChatMessage) => {
           try {
-            setMessages((prevMessages) => [...prevMessages, message]);
-            // Auto scroll to bottom
-            setTimeout(() => {
-              flatListRef.current?.scrollToEnd({animated: true});
-            }, 100);
-          } catch (error) {
-            console.error('❌ Error handling message:', error);
+            console.log('📨 Received message:', message?.text);
+            
+            if (message && typeof message === 'object' && message.text) {
+              setMessages((prevMessages: ChatMessage[]) => {
+                if (Array.isArray(prevMessages)) {
+                  return [...prevMessages, message];
+                } else {
+                  console.warn('⚠️ Messages state is not an array, resetting');
+                  return [message];
+                }
+              });
+              
+              // Safe auto scroll
+              setTimeout(() => {
+                try {
+                  flatListRef.current?.scrollToEnd({animated: true});
+                } catch (scrollError) {
+                  console.error('❌ Error scrolling:', scrollError);
+                }
+              }, 100);
+            } else {
+              console.warn('⚠️ Received invalid message:', message);
+            }
+          } catch (messageError) {
+            console.error('❌ Error handling message:', messageError);
           }
         });
+      } else {
+        console.warn('⚠️ BLE service does not support message callbacks');
       }
 
       // Set up status listener with error handling
@@ -86,27 +121,69 @@ const ChatScreen: React.FC<Props> = ({navigation, route}) => {
   }, []);
 
   const sendMessage = async () => {
-    if (!inputText.trim()) return;
+    console.log('📤 Attempting to send message...');
+    
+    if (!inputText || !inputText.trim()) {
+      console.log('⚠️ Empty message, not sending');
+      return;
+    }
 
     const messageText = inputText.trim();
+    console.log('📝 Message text:', messageText);
+    
+    // Clear input immediately for better UX
     setInputText('');
 
     try {
+      // Validate BLE service
       if (!bleService) {
-        Alert.alert('Error', 'BLE service not available');
+        console.error('❌ No BLE service available');
+        Alert.alert(
+          'Connection Error', 
+          'BLE service not available. Please reconnect.',
+          [{text: 'OK', onPress: () => setInputText(messageText)}]
+        );
         return;
       }
 
+      // Check if BLE service has sendMessage method
+      if (typeof bleService.sendMessage !== 'function') {
+        console.error('❌ BLE service missing sendMessage method');
+        Alert.alert(
+          'Service Error',
+          'Message sending not supported. Please restart the app.',
+          [{text: 'OK', onPress: () => setInputText(messageText)}]
+        );
+        return;
+      }
+
+      console.log('📡 Sending via BLE service...');
       const success = await bleService.sendMessage(messageText);
-      if (!success) {
-        Alert.alert('Send Failed', 'Could not send message. Check LoRa connection.');
+      
+      if (success) {
+        console.log('✅ Message sent successfully');
+      } else {
+        console.log('❌ Message send failed');
+        Alert.alert(
+          'Send Failed', 
+          'Could not send message. Check LoRa connection and try again.',
+          [
+            {text: 'Retry', onPress: () => setInputText(messageText)},
+            {text: 'Cancel', style: 'cancel'}
+          ]
+        );
       }
     } catch (error) {
-      console.error('❌ Send message error:', error);
-      Alert.alert('Send Error', 'An error occurred while sending the message.');
+      console.error('❌ Critical send message error:', error);
       
-      // Add the message back to input if it failed
-      setInputText(messageText);
+      Alert.alert(
+        'Send Error', 
+        `Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        [
+          {text: 'Retry', onPress: () => setInputText(messageText)},
+          {text: 'Cancel', style: 'cancel'}
+        ]
+      );
     }
   };
 
