@@ -1,0 +1,27 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Install Dependencies",
+			"type": "shell",
+			"command": "npm install",
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Start Metro",
+			"type": "shell",
+			"command": "npm start",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Run Android",
+			"type": "shell",
+			"command": "npm run android",
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

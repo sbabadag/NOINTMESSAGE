@@ -1,0 +1,175 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Upload to ESP32 COM5",
+			"type": "shell",
+			"command": "C:\\Users\\lenovo\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"--target",
+				"upload",
+				"--upload-port",
+				"COM5"
+			],
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Upload to ESP32 COM4",
+			"type": "shell",
+			"command": "C:\\Users\\lenovo\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"--target",
+				"upload",
+				"--upload-port",
+				"COM4"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Upload to COM5 Retry",
+			"type": "shell",
+			"command": "C:\\Users\\lenovo\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"--target",
+				"upload",
+				"--upload-port",
+				"COM5"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Upload Fix to COM4",
+			"type": "shell",
+			"command": "C:\\Users\\lenovo\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"--target",
+				"upload",
+				"--upload-port",
+				"COM4"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Upload Fix to COM5",
+			"type": "shell",
+			"command": "C:\\Users\\lenovo\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"--target",
+				"upload",
+				"--upload-port",
+				"COM5"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Upload Enhanced to COM4",
+			"type": "shell",
+			"command": "C:\\Users\\lenovo\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"--target",
+				"upload",
+				"--upload-port",
+				"COM4"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Upload Enhanced to COM5",
+			"type": "shell",
+			"command": "C:\\Users\\lenovo\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"--target",
+				"upload",
+				"--upload-port",
+				"COM5"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Upload Diagnostic to COM4",
+			"type": "shell",
+			"command": "C:\\Users\\lenovo\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"--target",
+				"upload",
+				"--upload-port",
+				"COM4"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Upload Hardware Test to COM4",
+			"type": "shell",
+			"command": "C:\\Users\\lenovo\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"--target",
+				"upload",
+				"--upload-port",
+				"COM4"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Upload Fixed Hardware Test to COM4",
+			"type": "shell",
+			"command": "C:\\Users\\lenovo\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"--target",
+				"upload",
+				"--upload-port",
+				"COM4"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Upload Repeating Hardware Test to COM4",
+			"type": "shell",
+			"command": "C:\\Users\\lenovo\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"--target",
+				"upload",
+				"--upload-port",
+				"COM4"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Upload Verified LoRa Bridge to COM4",
+			"type": "shell",
+			"command": "C:\\Users\\lenovo\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"--target",
+				"upload",
+				"--upload-port",
+				"COM4"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Upload Fixed Verified LoRa Bridge to COM4",
+			"type": "shell",
+			"command": "C:\\Users\\lenovo\\.platformio\\penv\\Scripts\\platformio.exe",
+			"args": [
+				"run",
+				"--target",
+				"upload",
+				"--upload-port",
+				"COM4"
+			],
+			"group": "build"
+		}
+	]
+}

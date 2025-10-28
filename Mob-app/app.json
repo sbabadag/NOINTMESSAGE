@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "LoRa BLE Chat Nav",
+    "slug": "lora-ble-chat-nav",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lorablechat.nav"
+    },
+    "android": {
+      "package": "com.lorablechat.nav",
+      "versionCode": 1
+    },
+    "extra": {
+      "eas": {
+        "projectId": "180bd7ee-b4b6-404c-9ab7-b5745c4c79ea"
+      }
+    },
+    "owner": "sbabadag"
+  }
+}
