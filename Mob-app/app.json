@@ -2,9 +2,10 @@
   "expo": {
     "name": "LoRa BLE Chat Nav",
     "slug": "lora-ble-chat-nav",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "sdkVersion": "51.0.0",
     "assetBundlePatterns": [
       "**/*"
     ],
