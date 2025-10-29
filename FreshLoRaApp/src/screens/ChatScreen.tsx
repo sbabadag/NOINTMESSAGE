@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,9 @@ import {
   SafeAreaView,
   FlatList,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
 } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { NavigationProp } from '@react-navigation/native';
@@ -31,6 +34,8 @@ const ChatScreen: React.FC<Props> = ({ route, navigation }) => {
   const [inputText, setInputText] = useState('');
   const [isConnected, setIsConnected] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const flatListRef = useRef<FlatList>(null);
+  const MAX_RETRY_ATTEMPTS = 3;
 
   useEffect(() => {
     // Setup message listener for incoming LoRa messages
@@ -77,27 +82,51 @@ const ChatScreen: React.FC<Props> = ({ route, navigation }) => {
     setMessages(prev => [...prev, outgoingMessage]);
     setInputText('');
 
-    try {
-      console.log(' Sending message via LoRa:', messageText);
-      const success = await bleService.sendMessage(messageText, messageId);
-      
-      if (!success) {
-        // Show error message
-        const errorMessage: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          text: ' Message failed to send. Check LoRa connection.',
-          sender: 'system',
-          timestamp: new Date(),
-          isOwn: false,
-        };
-        setMessages(prev => [...prev, errorMessage]);
+    // Scroll to bottom after adding message
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+
+    // Retry logic
+    let attempt = 0;
+    let success = false;
+
+    while (attempt < MAX_RETRY_ATTEMPTS && !success) {
+      attempt++;
+      try {
+        console.log(`📤 Sending message via LoRa (Attempt ${attempt}/${MAX_RETRY_ATTEMPTS}):`, messageText);
+        success = await bleService.sendMessage(messageText, messageId);
+        
+        if (!success && attempt < MAX_RETRY_ATTEMPTS) {
+          console.log(`⚠️ Attempt ${attempt} failed, retrying...`);
+          // Wait 1 second before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      } catch (error) {
+        console.error(`❌ Send message error (Attempt ${attempt}):`, error);
+        if (attempt >= MAX_RETRY_ATTEMPTS) {
+          // Show error message after all retries failed
+          const errorMessage: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            text: `❌ Failed to send message after ${MAX_RETRY_ATTEMPTS} attempts. Please check BLE connection.`,
+            sender: 'system',
+            timestamp: new Date(),
+            isOwn: false,
+          };
+          setMessages(prev => [...prev, errorMessage]);
+          Alert.alert(
+            'Send Failed', 
+            `Message could not be sent after ${MAX_RETRY_ATTEMPTS} attempts. Please check your connection.`
+          );
+        }
       }
-    } catch (error) {
-      console.error(' Send message error:', error);
-      Alert.alert('Send Error', 'Failed to send message. Please try again.');
-    } finally {
-      setIsSending(false);
     }
+
+    if (success) {
+      console.log('✅ Message sent successfully!');
+    }
+
+    setIsSending(false);
   };
 
   const renderMessage = ({ item }: { item: ChatMessage }) => (
@@ -129,15 +158,20 @@ const ChatScreen: React.FC<Props> = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backText}> Back</Text>
+          <Text style={styles.backText}>⬅ Back</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-          <Text style={styles.deviceName}> {deviceName}</Text>
+          <Text style={styles.deviceName}>📡 {deviceName}</Text>
           <Text style={styles.connectionStatus}>
-            {isConnected ? ` Connected (${stationType})` : ' Disconnected'}
+            {isConnected ? `✅ Connected (${stationType})` : '❌ Disconnected'}
           </Text>
         </View>
       </View>
@@ -145,18 +179,21 @@ const ChatScreen: React.FC<Props> = ({ route, navigation }) => {
       {/* LoRa Tunnel Indicator */}
       <View style={styles.tunnelIndicator}>
         <Text style={styles.tunnelText}>
-           Phone   BLE   {stationType}   LoRa Tunnel   Remote   BLE   Other Phone
+          📱 Phone ↔ BLE ↔ {stationType} ↔ LoRa Tunnel ↔ Remote ↔ BLE ↔ Other Phone 📱
         </Text>
       </View>
 
       {/* Messages */}
       <FlatList
+        ref={flatListRef}
         data={messages}
         renderItem={renderMessage}
         keyExtractor={(item) => item.id}
         style={styles.messagesList}
+        contentContainerStyle={styles.messagesContent}
         showsVerticalScrollIndicator={false}
         inverted={false}
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
       />
 
       {/* Input */}
@@ -167,8 +204,15 @@ const ChatScreen: React.FC<Props> = ({ route, navigation }) => {
           onChangeText={setInputText}
           placeholder="Type your message..."
           placeholderTextColor="#999"
-          multiline={false}
+          multiline={true}
           maxLength={200}
+          returnKeyType="send"
+          onSubmitEditing={() => {
+            if (inputText.trim() && !isSending) {
+              sendMessage();
+            }
+          }}
+          blurOnSubmit={false}
         />
         <TouchableOpacity 
           style={[styles.sendButton, isSending && styles.sendingButton]} 
@@ -176,7 +220,7 @@ const ChatScreen: React.FC<Props> = ({ route, navigation }) => {
           disabled={!inputText.trim() || isSending}
         >
           <Text style={styles.sendButtonText}>
-            {isSending ? '' : ''}
+            {isSending ? '⏳' : '➤'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -184,10 +228,11 @@ const ChatScreen: React.FC<Props> = ({ route, navigation }) => {
       {/* Status Bar */}
       <View style={styles.statusBar}>
         <Text style={styles.statusText}>
-          LoRa Status: {isConnected ? ' Tunnel Active' : ' Tunnel Down'}  
-          Range: ~10km  Encryption: AES-256
+          LoRa Status: {isConnected ? '🟢 Tunnel Active' : '🔴 Tunnel Down'} | 
+          Range: ~10km | Encryption: AES-256
         </Text>
       </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -237,6 +282,9 @@ const styles = StyleSheet.create({
   messagesList: {
     flex: 1,
     padding: 15,
+  },
+  messagesContent: {
+    flexGrow: 1,
   },
   messageContainer: {
     marginBottom: 10,
