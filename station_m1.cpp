@@ -8,8 +8,8 @@
 #include <ArduinoJson.h>
 
 // Station ID
-#define STATION_ID 2
-#define STATION_NAME "M2"
+#define STATION_ID 1
+#define STATION_NAME "M1"
 
 // Function declarations
 void sendLoRaMessage(String message);
@@ -51,12 +51,12 @@ bool messageReceived = false;
 class MyServerCallbacks: public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
       deviceConnected = true;
-      Serial.println("📱 Phone connected to M2");
+      Serial.println("📱 Phone connected to M1");
     };
 
     void onDisconnect(BLEServer* pServer) {
       deviceConnected = false;
-      Serial.println("📱 Phone disconnected from M2");
+      Serial.println("📱 Phone disconnected from M1");
     }
 };
 
@@ -140,7 +140,7 @@ void checkLoRaMessages() {
           
           // Check if message is for this station
           if (to == STATION_ID) {
-            Serial.println("✅ Message for M2, forwarding to phone");
+            Serial.println("✅ Message for M1, forwarding to phone");
             sendBLEMessage(msg);
           } else {
             Serial.println("⚠️ Message not for this station");
@@ -165,14 +165,14 @@ void handleSerialInput() {
     message.trim(); // Remove newline characters
     
     if (message.length() > 0) {
-      Serial.println("🔧 TEST MESSAGE from M2: " + message);
+      Serial.println("🔧 TEST MESSAGE from M1: " + message);
       sendLoRaMessage(message);
     }
   }
 }
 
 void initBLE() {
-  BLEDevice::init("M2-LoRa-Bridge");
+  BLEDevice::init("M1-LoRa-Bridge");
   
   // Create BLE Server
   pServer = BLEDevice::createServer();
@@ -201,7 +201,7 @@ void initBLE() {
 
   // Start advertising
   pServer->getAdvertising()->start();
-  Serial.println("✅ BLE service started - M2 ready for phone connection");
+  Serial.println("✅ BLE service started - M1 ready for phone connection");
 }
 
 void initLoRa() {
@@ -234,7 +234,7 @@ void initLoRa() {
     
   } else {
     Serial.printf("FAILED ❌ (Error: %d)\n", state);
-    Serial.println("⚠️ M2 running in BLE-only mode");
+    Serial.println("⚠️ M1 running in BLE-only mode");
     loraInitialized = false;
   }
 }
@@ -244,12 +244,12 @@ void setup() {
   delay(2000);
   
   Serial.println("\n╔════════════════════════════════════════╗");
-  Serial.println("║              STATION M2                ║");
-  Serial.println("║        Phone ↔ BLE ↔ LoRa ↔ M1        ║");
+  Serial.println("║              STATION M1                ║");
+  Serial.println("║        Phone ↔ BLE ↔ LoRa ↔ M2        ║");
   Serial.println("╚════════════════════════════════════════╝");
   Serial.println();
   
-  Serial.println("🚀 Starting M2 Station...");
+  Serial.println("🚀 Starting M1 Station...");
   
   // Initialize BLE
   initBLE();
@@ -258,10 +258,10 @@ void setup() {
   initLoRa();
   
   Serial.println();
-  Serial.println("✅ M2 Station ready!");
-  Serial.println("📱 Connect phone to 'M2-LoRa-Bridge'");
+  Serial.println("✅ M1 Station ready!");
+  Serial.println("📱 Connect phone to 'M1-LoRa-Bridge'");
   if (loraInitialized) {
-    Serial.println("📡 LoRa ready for M1 communication");
+    Serial.println("📡 LoRa ready for M2 communication");
   }
   Serial.println();
 }
@@ -290,7 +290,7 @@ void loop() {
   // Heartbeat
   static unsigned long lastHeartbeat = 0;
   if (millis() - lastHeartbeat > 5000) {
-    Serial.printf("💓 M2: BLE=%s, LoRa=%s (Type message + Enter to test)\n", 
+    Serial.printf("💓 M1: BLE=%s, LoRa=%s (Type message + Enter to test)\n", 
                   deviceConnected ? "Connected" : "Waiting", 
                   loraInitialized ? "Ready" : "Failed");
     lastHeartbeat = millis();
