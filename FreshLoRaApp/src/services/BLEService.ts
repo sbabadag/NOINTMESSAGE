@@ -1,4 +1,4 @@
-﻿import {BleManager, Device, Characteristic} from 'react-native-ble-plx';
+import {BleManager, Device, Characteristic} from 'react-native-ble-plx';
 import {LORA_BLE_CONFIG, LoRaDevice, ChatMessage} from '../types';
 
 export class BLEService {
@@ -63,11 +63,11 @@ export class BLEService {
     const deviceIds = new Set<string>();
 
     try {
-      console.log(' 🔍 Starting BLE scan for ESP32 LoRa devices...');
+      console.log(' ?? Starting BLE scan for ESP32 LoRa devices...');
       
       // Check BLE state before scanning
       const state = await this.manager.state();
-      console.log(' 📡 Current BLE state:', state);
+      console.log(' ?? Current BLE state:', state);
       
       if (state !== 'PoweredOn') {
         throw new Error(`Bluetooth is not ready. Current state: ${state}. Please enable Bluetooth and try again.`);
@@ -91,7 +91,7 @@ export class BLEService {
           }, 
           (error, device) => {
             if (error) {
-              console.error(' ❌ BLE scan error:', error);
+              console.error(' ? BLE scan error:', error);
               console.error(' Error details:', {
                 message: error.message,
                 code: error.errorCode,
@@ -119,12 +119,12 @@ export class BLEService {
 
             if (!scanStarted) {
               scanStarted = true;
-              console.log(' ✅ BLE scan started successfully');
+              console.log(' ? BLE scan started successfully');
             }
 
             if (device) {
               // Log all devices for debugging
-              console.log(` 📱 Found device: "${device.name || 'Unknown'}" (ID: ${device.id.substring(0,8)}..., RSSI: ${device.rssi})`);
+              console.log(` ?? Found device: "${device.name || 'Unknown'}" (ID: ${device.id.substring(0,8)}..., RSSI: ${device.rssi})`);
               
             // Look for ESP32 LoRa devices with pattern matching for your firmware
             if (device.name && !deviceIds.has(device.id)) {
@@ -149,7 +149,7 @@ export class BLEService {
                 
                 if (isLoRaDevice) {
                   deviceIds.add(device.id);
-                  console.log(' 🎯 Detected ESP32 LoRa device:', originalName);
+                  console.log(' ?? Detected ESP32 LoRa device:', originalName);
                   
                 // Station type detection matching your firmware
                 let stationType: 'M1' | 'M2' = 'M1';
@@ -166,7 +166,7 @@ export class BLEService {
                     stationType: stationType,
                   });
                   
-                  console.log(` ✨ Added device: ${originalName} (${stationType})`);
+                  console.log(` ? Added device: ${originalName} (${stationType})`);
                 }
               }
             }
@@ -178,17 +178,17 @@ export class BLEService {
         const progressInterval = setInterval(() => {
           timeRemaining--;
           if (timeRemaining > 0 && timeRemaining % 3 === 0) {
-            console.log(` ⏱️ Scanning... ${timeRemaining}s remaining, found ${devices.length} devices`);
+            console.log(` ?? Scanning... ${timeRemaining}s remaining, found ${devices.length} devices`);
           }
         }, 1000);
 
         scanTimeout = setTimeout(() => {
           clearInterval(progressInterval);
           this.manager.stopDeviceScan();
-          console.log(` 🏁 Scan complete. Found ${devices.length} ESP32 LoRa devices.`);
+          console.log(` ?? Scan complete. Found ${devices.length} ESP32 LoRa devices.`);
           
           if (devices.length === 0) {
-            console.log(' 💡 Troubleshooting tips:');
+            console.log(' ?? Troubleshooting tips:');
             console.log('   - Ensure ESP32 devices are powered on');
             console.log('   - Check ESP32 is advertising BLE');
             console.log('   - Move closer to ESP32 devices');
@@ -199,7 +199,7 @@ export class BLEService {
         }, 15000); // 15 second timeout
       });
     } catch (error) {
-      console.error(' ❌ Device scan failed:', error);
+      console.error(' ? Device scan failed:', error);
       await this.manager.stopDeviceScan(); // Ensure scan is stopped
       throw error;
     }

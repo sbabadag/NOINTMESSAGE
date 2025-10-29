@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -45,7 +45,7 @@ const DeviceSelectionScreen: React.FC<Props> = ({ navigation }) => {
       { id: 'mock-m2-002', name: 'M2-LoRa-Bridge', rssi: -52, stationType: 'M2' }
     ];
     setDevices(mockDevices);
-    console.log(' 🧪 Added mock devices matching your firmware names');
+    console.log(' ?? Added mock devices matching your firmware names');
   };
 
   const startScan = async () => {
@@ -53,21 +53,21 @@ const DeviceSelectionScreen: React.FC<Props> = ({ navigation }) => {
     setDevices([]);
     
     try {
-      console.log(' 🔍 Starting BLE scan...');
+      console.log(' ?? Starting BLE scan...');
       const foundDevices = await bleService.scanForDevices();
       setDevices(foundDevices);
       
       if (foundDevices.length === 0) {
         Alert.alert(
           'No Devices Found',
-          'No LoRa stations detected.\n\nTroubleshooting:\n• Ensure ESP32 M1/M2 devices are powered on\n• Check Bluetooth and Location permissions\n• Make sure Location services are enabled\n• Try moving closer to devices',
+          'No LoRa stations detected.\n\nTroubleshooting:\n? Ensure ESP32 M1/M2 devices are powered on\n? Check Bluetooth and Location permissions\n? Make sure Location services are enabled\n? Try moving closer to devices',
           [
             { text: 'Add Mock Devices', onPress: addMockDevices },
             { text: 'OK' }
           ]
         );
       } else {
-        console.log(` ✅ Found ${foundDevices.length} LoRa devices`);
+        console.log(` ? Found ${foundDevices.length} LoRa devices`);
       }
     } catch (error) {
       console.error(' Scan failed:', error);
@@ -80,7 +80,7 @@ const DeviceSelectionScreen: React.FC<Props> = ({ navigation }) => {
             // On Android, you can't directly open settings, but we can provide guidance
             Alert.alert(
               'Permissions Required',
-              'Please ensure:\n\n• Bluetooth is enabled\n• Location services are enabled\n• App has Bluetooth and Location permissions\n\nGo to Settings > Apps > LoRa BLE Chat > Permissions',
+              'Please ensure:\n\n? Bluetooth is enabled\n? Location services are enabled\n? App has Bluetooth and Location permissions\n\nGo to Settings > Apps > LoRa BLE Chat > Permissions',
               [{ text: 'OK' }]
             );
           }},
